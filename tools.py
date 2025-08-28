@@ -109,10 +109,10 @@ class TelegramTools:
 
                 if (
                     hasattr(full_user_info, "full_user")
-                    and full_user_info.full_user # type: ignore
-                    and full_user_info.full_user.about # type: ignore
+                    and full_user_info.full_user  # type: ignore
+                    and full_user_info.full_user.about  # type: ignore
                 ):
-                    bio = full_user_info.full_user.about # type: ignore
+                    bio = full_user_info.full_user.about  # type: ignore
                     info["bio"] = bio
 
         except Exception as e:
@@ -134,19 +134,19 @@ class TelegramTools:
             )
         )
         return [
-            chat for chat in result.chats if getattr(chat, "megagroup", False) # type: ignore
+            chat for chat in result.chats if getattr(chat, "megagroup", False)  # type: ignore
         ]
 
     def display_groups(self, groups: List[Any]) -> None:
         """Display available groups to user"""
-        print("\\n📋 Доступные группы:")
+        print("\n📋 Доступные группы:")
         for idx, group in enumerate(groups):
             print(f"{idx}: {group.title}")
 
     def get_user_group_choice(self, groups: List[Any]) -> Any:
         """Get user's group selection"""
         try:
-            group_idx = int(input("\\n👆 Введите номер группы: "))
+            group_idx = int(input("\n👆 Введите номер группы: "))
             return groups[group_idx]
         except (ValueError, IndexError):
             print("❌ Неверный номер группы")
@@ -155,9 +155,9 @@ class TelegramTools:
     def get_processing_mode(self) -> bool:
         """Get processing mode from user"""
         mode_choice = input(
-            "\\n⚡ Выберите режим обработки:\\n"
-            "1. 🚀 Быстрый (только имена, без био)\\n"
-            "2. 🔍 Подробный (с получением био)\\n"
+            "\n⚡ Выберите режим обработки:\n"
+            "1. 🚀 Быстрый (только имена, без био)\n"
+            "2. 🔍 Подробный (с получением био)\n"
             "👆 Ваш выбор: "
         )
         return mode_choice != "2"
@@ -176,7 +176,7 @@ class TelegramTools:
 
         fast_mode = self.get_processing_mode()
 
-        print(f"\\n👥 Получение участников группы '{target_group.title}'...")
+        print(f"\n👥 Получение участников группы '{target_group.title}'...")
         participants = await self.client.get_participants(target_group)
 
         # Generate filename with UUID
