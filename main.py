@@ -23,15 +23,12 @@ class TelegramScraper:
 
     def display_menu(self) -> str:
         """Display main menu and get user choice"""
-        print("🚀 Professional Telegram Scraper")
+        print("🚀 Telegram Messages Scraper")
         print("=" * 55)
 
         choice = input(
             "\n📋 Выберите действие:\n"
-            "1. 👥 Список участников группы\n"
-            "2. ➕ Добавить пользователей в группу\n"
-            "3. 📄 Отобразить содержимое CSV\n"
-            "4. 💬 Получить сообщения группы по периоду\n"
+            "1. 💬 Получить сообщения группы по периоду\n"
             "\n👆 Ваш выбор: "
         )
 
@@ -45,12 +42,6 @@ class TelegramScraper:
             choice = self.display_menu()
 
             if choice == "1":
-                await self.tools.list_users_in_group()
-            elif choice == "2":
-                await self.tools.add_users_to_group()
-            elif choice == "3":
-                self.tools.display_csv()
-            elif choice == "4":
                 await self.tools.fetch_group_messages()
             else:
                 print("❌ Неверный выбор")

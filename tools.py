@@ -6,24 +6,15 @@ Contains all business logic functions
 import asyncio
 import csv
 import re
-import sys
 import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 
 from telethon import TelegramClient
-from telethon.tl.functions.channels import InviteToChannelRequest
 from telethon.tl.functions.messages import GetDialogsRequest
 from telethon.tl.functions.users import GetFullUserRequest
-from telethon.tl.types import InputChannel, InputPeerEmpty, InputUser
-from telethon.errors.rpcerrorlist import (
-    FloodWaitError,
-    PeerFloodError,
-    UserIdInvalidError,
-    UserNotMutualContactError,
-    UserPrivacyRestrictedError,
-)
+from telethon.tl.types import InputPeerEmpty
 
 from config import GamingKeywords, Settings
 
@@ -161,93 +152,6 @@ class TelegramTools:
             "👆 Ваш выбор: "
         )
         return mode_choice != "2"
-
-    async def list_users_in_group(self) -> None:
-        """Export group participants to CSV"""
-        groups = await self.get_groups()
-        if not groups:
-            print("❌ Группы не найдены")
-            return
-
-        self.display_groups(groups)
-        target_group = self.get_user_group_choice(groups)
-        if not target_group:
-            return
-
-        fast_mode = self.get_processing_mode()
-
-        print(f"\n👥 Получение участников группы '{target_group.title}'...")
-        participants = await self.client.get_participants(target_group)
-
-        # Generate filename with UUID
-        prefix = "members"
-        filename = self.generate_filename(prefix, target_group.title)
-
-        print(f"💾 Сохранение {len(participants)} участников в {filename}...")
-
-        with open(
-            filename, "w", encoding=self.settings.csv_encoding, newline=""
-        ) as file:
-            writer = csv.writer(
-                file,
-                delimiter=self.settings.csv_delimiter,
-                lineterminator=self.settings.csv_line_terminator,
-            )
-            writer.writerow(
-                [
-                    "username",
-                    "user_id",
-                    "access_hash",
-                    "name",
-                    "group",
-                    "group_id",
-                    "bio",
-                    "gaming_keywords",
-                    "common_groups",
-                ]
-            )
-
-            for i, user in enumerate(participants):
-                if i % 50 == 0 or i == len(participants) - 1:
-                    progress = (i + 1) / len(participants) * 100
-                    print(
-                        f"[{i+1}/{len(participants)}] Обработка: {progress:.1f}%"
-                    )
-
-                username = getattr(user, "username", "")
-                name = " ".join(
-                    filter(
-                        None,
-                        [
-                            getattr(user, "first_name", ""),
-                            getattr(user, "last_name", ""),
-                        ],
-                    )
-                )
-
-                # Choose processing mode
-                if fast_mode:
-                    info = await self.get_user_fast_info(user)
-                    await asyncio.sleep(self.settings.fast_mode_delay)
-                else:
-                    info = await self.get_user_detailed_info(user)
-                    await asyncio.sleep(self.settings.detailed_mode_delay)
-
-                writer.writerow(
-                    [
-                        username,
-                        user.id,
-                        getattr(user, "access_hash", ""),
-                        name,
-                        target_group.title,
-                        target_group.id,
-                        info["bio"],
-                        info["gaming_keywords"],
-                        info["common_groups"],
-                    ]
-                )
-
-        print(f"✅ Сохранено {len(participants)} участников в {filename}")
 
     def get_period_input(self) -> tuple[Optional[str], int]:
         """Get period type and quantity from user"""
@@ -475,139 +379,3 @@ class TelegramTools:
 
         print(f"✅ Сохранено {len(messages)} сообщений в {filename}")
         print(f"📊 Кэшировано {len(users_cache)} уникальных пользователей")
-
-    async def add_users_to_group(self) -> None:
-        """Add users from CSV to group"""
-        if len(sys.argv) < 2:
-            print("❌ Укажите файл CSV как аргумент")
-            return
-
-        input_file = sys.argv[1]
-        users = []
-
-        try:
-            with open(input_file, encoding=self.settings.csv_encoding) as file:
-                reader = csv.reader(
-                    file,
-                    delimiter=self.settings.csv_delimiter,
-                    lineterminator=self.settings.csv_line_terminator,
-                )
-                next(reader)  # Skip header
-                for row in reader:
-                    if len(row) < 3:
-                        continue
-                    users.append(
-                        {
-                            "username": row[0],
-                            "id": int(row[1]) if row[1] else 0,
-                            "access_hash": int(row[2]) if row[2] else 0,
-                        }
-                    )
-        except FileNotFoundError:
-            print(f"❌ Файл {input_file} не найден")
-            return
-
-        groups = await self.get_groups()
-        if not groups:
-            print("❌ Группы не найдены")
-            return
-
-        self.display_groups(groups)
-        target_group = self.get_user_group_choice(groups)
-        if not target_group:
-            return
-
-        target_channel = InputChannel(
-            target_group.id, target_group.access_hash
-        )
-
-        print(
-            f"\n👥 Добавление {len(users)} пользователей в '{target_group.title}'..."
-        )
-
-        success_count = 0
-        for i, user in enumerate(users):
-            try:
-                if user["username"]:
-                    user_to_add = user["username"]
-                else:
-                    user_to_add = InputUser(user["id"], user["access_hash"])
-
-                await self.client(
-                    InviteToChannelRequest(target_channel, [user_to_add])
-                )
-                success_count += 1
-                print(
-                    f"✅ [{i+1}/{len(users)}] Добавлен: {user.get('username', user['id'])}"
-                )
-
-                await asyncio.sleep(1)  # Rate limiting
-
-            except PeerFloodError:
-                print("❌ Флуд контроль. Попробуйте позже.")
-                break
-            except UserPrivacyRestrictedError:
-                print(
-                    f"⚠️ [{i+1}/{len(users)}] Настройки приватности: {user.get('username', user['id'])}"
-                )
-            except UserNotMutualContactError:
-                print(
-                    f"⚠️ [{i+1}/{len(users)}] Не взаимный контакт: {user.get('username', user['id'])}"
-                )
-            except UserIdInvalidError:
-                print(
-                    f"⚠️ [{i+1}/{len(users)}] Неверный ID: {user.get('username', user['id'])}"
-                )
-            except FloodWaitError as e:
-                print(f"⏰ Ожидание {e.seconds} секунд...")
-                await asyncio.sleep(e.seconds)
-            except Exception as e:
-                print(
-                    f"❌ [{i+1}/{len(users)}] Ошибка: {user.get('username', user['id'])} - {str(e)}"
-                )
-
-        print(
-            f"\n✅ Успешно добавлено: {success_count}/{len(users)} пользователей"
-        )
-
-    def display_csv(self) -> None:
-        """Display CSV file contents"""
-        # Get available CSV files in data folder
-        csv_files = list(self.settings.data_folder.glob("*.csv"))
-
-        if not csv_files:
-            print("❌ CSV файлы не найдены в папке data/")
-            return
-
-        if len(csv_files) == 1:
-            filename = csv_files[0]
-        else:
-            print("\n📁 Доступные CSV файлы:")
-            for i, file in enumerate(csv_files):
-                print(f"{i}: {file.name}")
-
-            try:
-                file_idx = int(input("\n👆 Выберите файл: "))
-                filename = csv_files[file_idx]
-            except (ValueError, IndexError):
-                print("❌ Неверный номер файла")
-                return
-
-        try:
-            with open(filename, encoding=self.settings.csv_encoding) as file:
-                reader = csv.reader(
-                    file,
-                    delimiter=self.settings.csv_delimiter,
-                    lineterminator=self.settings.csv_line_terminator,
-                )
-                print(f"\n📄 Содержимое файла: {filename.name}")
-                print("=" * 50)
-                for i, row in enumerate(reader):
-                    print(f"[{i+1}] {row}")
-                    if i > 20:
-                        print("... (показаны первые 20 строк)")
-                        break
-        except FileNotFoundError:
-            print(f"❌ Файл {filename} не найден")
-        except Exception as e:
-            print(f"❌ Ошибка чтения файла: {e}")
