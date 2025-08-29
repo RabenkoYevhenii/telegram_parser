@@ -1,15 +1,21 @@
-# 🚀 Professional Telegram Scraper
+# 🚀 Telegram Messages Scraper & AI Validator
 
-A professional, modular Telegram scraping tool built with Python that extracts user data and messages from Telegram groups with advanced gaming keyword detection.
+A professional Telegram scraping tool that extracts messages from groups and validates users with AI for business development purposes.
 
 ## 📋 Features
 
 ### 🎯 Core Functionality
-- **User Extraction**: Export group members with detailed profiles
-- **Message Scraping**: Extract messages with gaming keyword detection  
+- **Message Scraping**: Extract messages with gaming keyword detection
+- **Data Processing**: Group messages by user in JSON format
+- **AI Validation**: Use OpenRouter AI to validate potential customers
 - **Gaming Detection**: 106+ gaming keywords detection in message content
-- **Bulk Operations**: Add users to groups from CSV files
-- **Data Export**: Professional CSV export with UUID-based naming
+- **Smart Filtering**: Filter users with relevant gaming/affiliate keywords
+
+### 🤖 AI Integration
+- **OpenRouter Integration**: Uses Gemini 2.0 Flash for user validation
+- **Intelligent Analysis**: Analyzes user behavior patterns
+- **Business Focus**: Identifies potential customers for traffic/payment services
+- **JSON Output**: Structured data with validation results
 
 ### 🏗️ Professional Architecture
 - **Modular Design**: Clean separation of concerns across multiple files
@@ -24,11 +30,11 @@ A professional, modular Telegram scraping tool built with Python that extracts u
 telegram_scraper/
 ├── main.py           # 🎯 Application entry point & orchestration
 ├── tools.py          # 🔧 Core business logic & Telegram operations  
-├── config.py         # ⚙️ Pydantic configuration & constants
+├── config.py         # ⚙️ Pydantic configuration & AI prompts
 ├── requirements.txt  # 📦 Dependencies specification
 ├── .env.example     # 🔐 Environment configuration template
 ├── README.md        # 📖 Documentation
-└── data/            # 📁 Output directory for CSV files
+└── data/            # 📁 Output directory for CSV/JSON files
 ```
 
 ### 📁 File Responsibilities
@@ -37,17 +43,18 @@ telegram_scraper/
 - Application lifecycle management
 - User interface and menu system
 - Error handling and logging
-- Client connection management
+- Optional Telegram connection for data processing
 
 #### `tools.py` - Business Logic Hub
 - `TelegramTools` class with all scraping operations
-- User data extraction (fast & detailed modes)
 - Message processing with keyword detection
-- CSV export functionality
-- Group management operations
+- CSV to JSON data transformation
+- AI validation with OpenRouter integration
+- User filtering and data export
 
 #### `config.py` - Configuration & Constants
 - `Settings` class with Pydantic validation
+- AI prompts and OpenRouter configuration
 - `GamingKeywords` class with 106+ gaming terms
 - Environment variable management
 - Path and encoding configurations
@@ -80,17 +87,24 @@ nano .env
 ```
 
 **Required settings in `.env`:**
+
+**For Message Scraping:**
 ```env
 API_ID=your_telegram_api_id
 API_HASH=your_telegram_api_hash
 PHONE=+1234567890
-SESSION_NAME=my_session
 ```
 
-**Get API credentials:**
-1. Visit https://my.telegram.org/apps
-2. Create a new application
-3. Copy `API_ID` and `API_HASH`
+**For AI Validation (optional):**
+```env
+OPENROUTER_API_KEY=your_openrouter_api_key
+AI_MODEL=google/gemini-2.0-flash-exp:free
+```
+
+**Get credentials:**
+1. **Telegram API**: Visit https://my.telegram.org/apps
+2. **OpenRouter**: Visit https://openrouter.ai/keys
+3. Copy credentials to `.env`
 
 ### 3️⃣ First Run
 
@@ -103,37 +117,69 @@ python main.py
 ### 🎮 Main Menu Options
 
 ```
-🚀 Профессиональный Telegram Scraper
+🚀 Telegram Messages Scraper
 
-1. 👥 Экспорт участников группы
-2. 📥 Получение сообщений по периоду  
-3. ➕ Добавление пользователей в группу
-4. 📄 Просмотр CSV файлов
-5. ❌ Выход
+1. � Получить сообщения группы по периоду
+2. 🤖 Обработать и валидировать данные с AI
 ```
 
-### 1️⃣ Export Group Members
-
-**Features:**
-- Export all group participants to CSV
-- Fast mode (names only) or detailed mode (with bios)
-- Gaming keyword detection in user profiles
-- Common groups analysis
-- Progress tracking with status updates
-
-**Output CSV columns:**
-```csv
-username,user_id,access_hash,name,group,group_id,bio,gaming_keywords,common_groups
-```
-
-### 2️⃣ Fetch Messages by Period
+### 1️⃣ Fetch Group Messages
 
 **Features:**
 - Extract messages from specified time periods (days/weeks/months)
-- **Gaming keyword detection in message content only**
+- Gaming keyword detection in message content
 - Sender information caching for performance
 - Message text cleaning and formatting
 - Detailed progress reporting
+
+**Output CSV columns:**
+```csv
+message_id,date,sender_id,sender_username,sender_name,message_text,group,group_id,sender_bio,message_gaming_keywords,sender_common_groups
+```
+
+### 2️⃣ Process and Validate Data with AI
+
+**Data Processing Pipeline:**
+
+**Step 1: CSV to JSON Transformation**
+- Groups messages by user
+- Creates structured JSON format:
+```json
+{
+  "user_id": {
+    "sender_id": "123456",
+    "sender_username": "username",
+    "sender_name": "Full Name",
+    "sender_bio": "User bio...",
+    "messages": [
+      {
+        "message_id": "1",
+        "date": "2024-01-01 12:00:00 UTC",
+        "message_text": "Message content...",
+        "message_gaming_keywords": "casino, betting"
+      }
+    ]
+  }
+}
+```
+
+**Step 2: Gaming Keywords Filtering**
+- Filters users who have at least one message with gaming keywords
+- Saves filtered data to `filtered-users-*.json`
+
+**Step 3: AI Validation**
+- Uses OpenRouter API with Gemini 2.0 Flash
+- Analyzes user behavior patterns
+- Determines if user is a potential customer for traffic/payment services
+- Returns boolean validation result
+- Saves validated users to `validated-users-*.json`
+
+**AI Analysis Criteria:**
+- Traffic arbitrage discussions
+- Affiliate marketing interest
+- Payment processing needs
+- Geographic market focus
+- Professional business communication
 
 **Output CSV columns:**
 ```csv
