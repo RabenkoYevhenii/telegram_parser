@@ -252,10 +252,10 @@ class TelegramTools:
     def get_period_input(self) -> tuple[Optional[str], int]:
         """Get period type and quantity from user"""
         period_type = input(
-            "\\n📅 Выберите период:\\n"
-            "1. 📆 Дни\\n"
-            "2. 📊 Недели\\n"
-            "3. 🗓️ Месяцы\\n"
+            "\n📅 Выберите период:\n"
+            "1. 📆 Дни\n"
+            "2. 📊 Недели\n"
+            "3. 🗓️ Месяцы\n"
             "👆 Ваш выбор: "
         )
 
@@ -315,8 +315,8 @@ class TelegramTools:
             return
 
         print(
-            f'\\n📥 Получение сообщений с {start_date.strftime("%Y-%m-%d")} '
-            f'по {end_date.strftime("%Y-%m-%d")}...'
+            f'\n📥 Получение сообщений с {start_date.strftime("%Y-%m-%d %H:%M:%S")} '
+            f'по {end_date.strftime("%Y-%m-%d %H:%M:%S")} (UTC)...'
         )
 
         # Fetch messages
@@ -329,7 +329,14 @@ class TelegramTools:
                     messages.append(message)
 
                 if len(messages) % 100 == 0:
-                    print(f"📝 Получено {len(messages)} сообщений...")
+                    latest_date = (
+                        message.date.strftime("%Y-%m-%d %H:%M:%S")
+                        if messages
+                        else ""
+                    )
+                    print(
+                        f"📝 Получено {len(messages)} сообщений... (последнее: {latest_date})"
+                    )
         except Exception as e:
             print(f"❌ Ошибка получения сообщений: {str(e)}")
             return
@@ -372,8 +379,9 @@ class TelegramTools:
                     or i == len(messages) - 1
                 ):
                     progress = (i + 1) / len(messages) * 100
+                    message_date = message.date.strftime("%Y-%m-%d %H:%M:%S")
                     print(
-                        f"[{i+1}/{len(messages)}] Обработка: {progress:.1f}%"
+                        f"[{i+1}/{len(messages)}] Обработка: {progress:.1f}% | Сообщение от: {message_date}"
                     )
 
                 # Basic sender info
@@ -452,7 +460,7 @@ class TelegramTools:
                 writer.writerow(
                     [
                         message.id,
-                        message.date.strftime("%Y-%m-%d %H:%M:%S"),
+                        message.date.strftime("%Y-%m-%d %H:%M:%S UTC"),
                         sender_info["id"],
                         sender_info["username"],
                         sender_info["name"],
@@ -514,7 +522,7 @@ class TelegramTools:
         )
 
         print(
-            f"\\n👥 Добавление {len(users)} пользователей в '{target_group.title}'..."
+            f"\n👥 Добавление {len(users)} пользователей в '{target_group.title}'..."
         )
 
         success_count = 0
@@ -559,7 +567,7 @@ class TelegramTools:
                 )
 
         print(
-            f"\\n✅ Успешно добавлено: {success_count}/{len(users)} пользователей"
+            f"\n✅ Успешно добавлено: {success_count}/{len(users)} пользователей"
         )
 
     def display_csv(self) -> None:
@@ -574,12 +582,12 @@ class TelegramTools:
         if len(csv_files) == 1:
             filename = csv_files[0]
         else:
-            print("\\n📁 Доступные CSV файлы:")
+            print("\n📁 Доступные CSV файлы:")
             for i, file in enumerate(csv_files):
                 print(f"{i}: {file.name}")
 
             try:
-                file_idx = int(input("\\n👆 Выберите файл: "))
+                file_idx = int(input("\n👆 Выберите файл: "))
                 filename = csv_files[file_idx]
             except (ValueError, IndexError):
                 print("❌ Неверный номер файла")
@@ -592,7 +600,7 @@ class TelegramTools:
                     delimiter=self.settings.csv_delimiter,
                     lineterminator=self.settings.csv_line_terminator,
                 )
-                print(f"\\n📄 Содержимое файла: {filename.name}")
+                print(f"\n📄 Содержимое файла: {filename.name}")
                 print("=" * 50)
                 for i, row in enumerate(reader):
                     print(f"[{i+1}] {row}")
